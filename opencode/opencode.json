@@ -16,11 +16,6 @@
       "url": "https://mcp.firecrawl.dev/v2/mcp",
       "enabled": true
     },
-    "playwright": {
-      "type": "local",
-      "command": ["npx", "-y", "@playwright/mcp", "--browser", "chromium", "--headless"],
-      "enabled": true
-    },
     "linear": {
       "type": "remote",
       "url": "https://mcp.linear.app/mcp",
