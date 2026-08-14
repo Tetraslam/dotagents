@@ -4,6 +4,7 @@
 - When implementation is requested, act instead of only proposing a solution.
 - Prefer the smallest correct change and carry it through verification.
 - Preserve unrelated work and never use destructive commands without explicit approval.
+- When work is complete on a non-default branch, commit and push only the task's changes. On `main`, `master`, or another default branch, ask before committing or pushing.
 - Ask only when a consequential choice cannot be inferred or safely reversed.
 - Use current documentation for libraries, APIs, and tools.
 - Keep status updates and final reports concise and factual.
