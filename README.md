@@ -13,10 +13,11 @@ The agent should:
 1. Install OpenCode, Helix, and the runtime needed for `npx` if they are missing.
 2. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). Preserve existing providers, models, plugins, permissions, and unrelated files.
 3. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
-4. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
-5. Authenticate alphaXiv with `opencode mcp auth alphaxiv`.
-6. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, authenticate them with `opencode mcp auth linear` and `opencode mcp auth github`.
-7. Restart OpenCode, run `opencode mcp list`, and fix any integration that does not connect.
+4. Ask whether the user can connect OpenAI and OpenRouter, then configure each accepted provider with `opencode auth login`. The preferred models are `openai/gpt-5.6-sol-fast` for superagent and `openrouter/deepseek/deepseek-v4-flash` for researcher and watcher. If either provider is unavailable, ask which available model to substitute before changing the agent files.
+5. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
+6. Authenticate alphaXiv with `opencode mcp auth alphaxiv`.
+7. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, authenticate them with `opencode mcp auth linear` and `opencode mcp auth github`.
+8. Restart OpenCode, run `opencode mcp list`, and fix any integration that does not connect.
 
 ## Included
 
@@ -28,5 +29,3 @@ The agent should:
 - Researcher, superagent, and watcher subagents
 - A short global working agreement
 - Soft-wrapped Helix editing
-
-Models are intentionally unspecified so the subagents inherit whatever works in the user's environment.
