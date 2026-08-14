@@ -1,3 +1,30 @@
+[editor]
+bufferline = "multiple"
+cursorline = true
+color-modes = true
+popup-border = "all"
+end-of-line-diagnostics = "disable"
+
+[editor.file-picker]
+hidden = false
+
+[editor.indent-guides]
+render = true
+skip-levels = 1
+
+[editor.inline-diagnostics]
+cursor-line = "warning"
+other-lines = "disable"
+
+[editor.statusline]
+right = [
+  "diagnostics",
+  "version-control",
+  "selections",
+  "position",
+  "file-encoding",
+]
+
 [editor.soft-wrap]
 enable = true
 max-wrap = 25

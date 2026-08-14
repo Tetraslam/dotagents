@@ -10,7 +10,7 @@ Point your agent at this repository and ask:
 
 The agent should:
 
-1. Install OpenCode, Helix, and the runtime needed for `npx` if they are missing.
+1. Install OpenCode, Helix, and the runtime needed for `npx` if they are missing. If the Helix package provides `helix` rather than `hx`, add a durable `hx` wrapper or alias appropriate for the user's environment.
 2. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). Preserve existing providers, models, plugins, permissions, and unrelated files.
 3. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
 4. Ask whether the user can connect OpenAI and OpenRouter, then configure each accepted provider with `opencode auth login`. The preferred models are `openai/gpt-5.6-sol-fast` for superagent and `openrouter/deepseek/deepseek-v4-flash` for researcher and watcher. If either provider is unavailable, ask which available model to substitute before changing the agent files.
