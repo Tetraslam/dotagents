@@ -49,3 +49,19 @@ opencodr --takeover main # Replace another writable attachment
 
 Use ordinary `opencode` for disposable sessions. OpenCode arguments passed
 after `--` apply only when a role is first started.
+
+Direct attach mirrors the managed agent's terminal title to the outer terminal.
+It also keeps native outer-terminal text selection instead of Herdr's mouse
+capture; pane scrolling remains available through keyboard input.
+
+### Planned remote agents
+
+Add versioned remote profiles so commands such as `opencodr remote tetrapod
+review` execute the same tracked `opencodr` inside a remote checkout over
+`ssh -tt`. Herdr runs where the code lives: each host owns one default session,
+each repository is a workspace, and each durable role is a single-pane tab.
+
+The remote host should clone this repository and link its command directly,
+install Herdr plus the OpenCode integration, and run Herdr as a user service.
+The local Omarchy widget also needs an SSH-backed status bridge because it
+currently observes only the local Herdr socket.
