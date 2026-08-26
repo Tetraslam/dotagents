@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: opencodr [--detach] [--takeover] [ROLE] [-- OPENCODE_ARGS...]
+
+Run or reconnect to a repo-scoped OpenCode agent managed by Herdr.
+
+  ROLE          Durable role name (default: main)
+  --detach      Ensure the agent is running without attaching
+  --takeover    Replace another writable direct attachment
+
+OpenCode arguments apply only when the role is first started.
+EOF
+}
+
+die() {
+  printf 'opencodr: %s\n' "$*" >&2
+  exit 1
+}
+
+for command in git herdr jq; do
+  command -v "$command" >/dev/null 2>&1 || die "$command is required"
+done
+
+role=main
+role_set=0
+detach=0
+takeover=0
+agent_args=()
+
+while (($#)); do
+  case $1 in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  --detach)
+    detach=1
+    shift
+    ;;
+  --takeover)
+    takeover=1
+    shift
+    ;;
+  --)
+    shift
+    agent_args=("$@")
+    break
+    ;;
+  -*)
+    die "unknown option: $1"
+    ;;
+  *)
+    ((role_set == 0)) || die "only one role may be specified"
+    role=$1
+    role_set=1
+    shift
+    ;;
+  esac
+done
+
+[[ $role =~ ^[a-z][a-z0-9_-]{0,15}$ ]] ||
+  die "role must match [a-z][a-z0-9_-]{0,15}"
+((detach == 0 || takeover == 0)) || die "--takeover cannot be used with --detach"
+
+if root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null); then
+  root=$(cd "$root" && pwd -P)
+else
+  root=$(pwd -P)
+fi
+
+project=$(basename "$root")
+project_slug=$(printf '%s' "$project" | tr '[:upper:]' '[:lower:]' |
+  sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+[[ -n $project_slug ]] || project_slug=project
+[[ $project_slug =~ ^[a-z] ]] || project_slug="project-$project_slug"
+
+root_hash=$(printf '%s' "$root" | git hash-object --stdin | cut -c1-10)
+agent_suffix="-$role-$root_hash"
+project_limit=$((32 - ${#agent_suffix}))
+((project_limit > 0)) || die "role is too long to form a Herdr agent name"
+agent_name="${project_slug:0:project_limit}${agent_suffix}"
+
+lock_base=${XDG_RUNTIME_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}}
+lock_dir=$lock_base/opencodr
+lock_path=$lock_dir/setup.lock
+lock_owned=0
+
+release_lock() {
+  if ((lock_owned)); then
+    rmdir "$lock_path"
+    lock_owned=0
+  fi
+}
+
+mkdir -p "$lock_dir"
+for _ in {1..100}; do
+  if mkdir "$lock_path" 2>/dev/null; then
+    lock_owned=1
+    break
+  fi
+  sleep 0.1
+done
+((lock_owned)) || die "timed out waiting for setup lock: $lock_path"
+trap release_lock EXIT HUP INT TERM
+
+if ! herdr status server >/dev/null 2>&1; then
+  state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/herdr
+  mkdir -p "$state_dir"
+  nohup herdr server >>"$state_dir/opencodr-server.log" 2>&1 </dev/null &
+
+  for _ in {1..50}; do
+    herdr status server >/dev/null 2>&1 && break
+    sleep 0.1
+  done
+  herdr status server >/dev/null 2>&1 || die "Herdr server did not start"
+fi
+
+panes_json=$(herdr pane list)
+workspace_ids=$(jq -c --arg root "$root" \
+  '[.result.panes[] | select(.cwd == $root) | .workspace_id] | unique' \
+  <<<"$panes_json")
+workspace_count=$(jq -r 'length' <<<"$workspace_ids")
+
+case $workspace_count in
+0)
+  created=$(herdr workspace create --cwd "$root" --label "$project" --no-focus)
+  workspace_id=$(jq -er '.result.workspace.workspace_id' <<<"$created")
+  tab_id=$(jq -er '.result.tab.tab_id' <<<"$created")
+  pane_id=$(jq -er '.result.root_pane.pane_id' <<<"$created")
+  herdr tab rename "$tab_id" "$role" >/dev/null
+  herdr pane rename "$pane_id" "$role" >/dev/null
+  ;;
+1)
+  workspace_id=$(jq -er '.[0]' <<<"$workspace_ids")
+  tabs_json=$(herdr tab list --workspace "$workspace_id")
+  tab_ids=$(jq -c --arg role "$role" \
+    '[.result.tabs[] | select(.label == $role) | .tab_id]' <<<"$tabs_json")
+  tab_count=$(jq -r 'length' <<<"$tab_ids")
+
+  case $tab_count in
+  0)
+    created=$(herdr tab create --workspace "$workspace_id" --cwd "$root" \
+      --label "$role" --no-focus)
+    tab_id=$(jq -er '.result.tab.tab_id' <<<"$created")
+    pane_id=$(jq -er '.result.root_pane.pane_id' <<<"$created")
+    herdr pane rename "$pane_id" "$role" >/dev/null
+    ;;
+  1)
+    tab_id=$(jq -er '.[0]' <<<"$tab_ids")
+    pane_ids=$(jq -c --arg tab "$tab_id" \
+      '[.result.panes[] | select(.tab_id == $tab) | .pane_id]' <<<"$panes_json")
+    pane_count=$(jq -r 'length' <<<"$pane_ids")
+    ((pane_count == 1)) || die "role '$role' must contain exactly one Herdr pane"
+    pane_id=$(jq -er '.[0]' <<<"$pane_ids")
+    ;;
+  *)
+    die "workspace '$project' has multiple tabs named '$role'"
+    ;;
+  esac
+  ;;
+*)
+  die "multiple Herdr workspaces use $root"
+  ;;
+esac
+
+if agent_json=$(herdr agent get "$pane_id" 2>/dev/null); then
+  agent_kind=$(jq -er '.result.agent.agent' <<<"$agent_json")
+  [[ $agent_kind == opencode ]] ||
+    die "role '$role' contains $agent_kind, not OpenCode"
+  agent_name=$(jq -er '.result.agent.name // .result.agent.pane_id' <<<"$agent_json")
+  if ((${#agent_args[@]})); then
+    printf 'opencodr: role %s is already running; launch arguments were ignored\n' \
+      "$role" >&2
+  fi
+else
+  occupant=initializing
+  for _ in {1..50}; do
+    process_json=$(herdr pane process-info --pane "$pane_id")
+    occupant=$(jq -r '
+      .result.process_info as $process
+      | first($process.foreground_processes[]
+          | select(.pid != $process.shell_pid) | .cmdline) // ""
+    ' <<<"$process_json")
+    [[ -z $occupant ]] && break
+    sleep 0.1
+  done
+  [[ -z $occupant ]] || die "role '$role' is occupied by: $occupant"
+
+  start=(herdr agent start "$agent_name" --kind opencode --pane "$pane_id")
+  if ((${#agent_args[@]})); then
+    start+=(-- "${agent_args[@]}")
+  fi
+  "${start[@]}" >/dev/null
+fi
+
+release_lock
+trap - EXIT HUP INT TERM
+
+if ((detach)); then
+  printf '%s\t%s\t%s\n' "$agent_name" "$workspace_id" "$pane_id"
+  exit 0
+fi
+
+attach=(herdr agent attach "$pane_id")
+((takeover)) && attach+=(--takeover)
+exec "${attach[@]}"
