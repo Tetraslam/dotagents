@@ -15,7 +15,7 @@ The agent should:
 3. Merge `agent-browser/config.json` into `~/.agent-browser/config.json` and copy `agents/skills/agent-browser/` to `~/.agents/skills/agent-browser/`. Preserve unrelated configuration.
 4. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). Preserve existing providers, models, plugins, permissions, and unrelated files.
 5. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
-6. Ask whether the user can connect OpenAI and OpenRouter, then configure each accepted provider with `opencode auth login`. The preferred models are `openai/gpt-5.6-sol-fast` for superagent and `openrouter/deepseek/deepseek-v4-flash` for researcher and watcher. If either provider is unavailable, ask which available model to substitute before changing the agent files.
+6. Ask whether the user can connect OpenAI, then configure it with `opencode auth login`. The preferred models are `openai/gpt-5.6-sol-fast` for superagent and `openai/gpt-5.6-terra` for researcher and watcher. If OpenAI is unavailable, ask which available model to substitute before changing the agent files.
 7. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
 8. Authenticate alphaXiv with `opencode mcp auth alphaxiv`.
 9. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, authenticate them with `opencode mcp auth linear` and `opencode mcp auth github`.

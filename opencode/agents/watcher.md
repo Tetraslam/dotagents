@@ -2,7 +2,7 @@
 name: watcher
 description: Polls long-running operations until they reach a terminal state, then returns a compact report.
 mode: subagent
-model: openrouter/deepseek/deepseek-v4-flash
+model: openai/gpt-5.6-terra
 steps: 100
 permission:
   edit: deny
