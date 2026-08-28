@@ -9,6 +9,20 @@
 - Use current documentation for libraries, APIs, and tools.
 - Keep status updates and final reports concise and factual.
 
+## Programming
+
+### Systems Design
+
+Apply this gate to live or pinned interfaces, lifecycle or cross-boundary behavior, canonical state, destructive or authorization-sensitive mutation, distributed atomicity, irreversible migration, or high-blast-radius control.
+
+Before implementation or mutation, write a compact working record: behavioral contract; atomic unit and largest real shape; authority and lifecycle owner; native primitive or specific capability gap; planned faithful evidence. Do not silently proceed through a correctness-critical unknown: resolve it or mark and surface it as `unproven`. Keep the record current through pivots and review.
+
+1. Name the system boundary: atomic unit, authority, largest real shape, trusted inputs, and lifecycle owners.
+2. Prefer existing mechanisms: repository patterns, deployed native primitives, and pinned contracts. Verify live mutable premises before relying on them. Add a custom mechanism only for a specific, evidenced capability gap.
+3. Keep code and mutation reviewable: one behavioral contract, executable logic in tested source, and a version-matched real consumer or payload before mutation.
+4. Prove behavior at the failure boundary: use faithful applicable topology and lifecycle, and exercise a representative coherence-threatening failure. Mark unavailable critical evidence `unproven` and surface it rather than silently accepting it.
+5. Preserve review state: carry durable decisions and findings across pivots, adjudicate every feedback surface, and resolve or disposition each item in the platform's actual state rather than relying on a verbal reply.
+
 ## Work Iteration
 
 A push or pull request is not the end of the task. When CI or automatic code review is configured:
