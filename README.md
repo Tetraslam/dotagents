@@ -16,7 +16,7 @@ The agent should:
 4. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). Preserve existing providers, models, plugins, permissions, and unrelated files.
 5. Run `herdr integration install opencode`, then link `bin/opencodr` into a directory on `PATH` rather than copying it. Preserve an existing command unless the user approves replacing it.
 6. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
-7. Ask whether the user can connect OpenAI and Anthropic, then configure the available providers with `opencode auth login`. The preferred models are `openai/gpt-5.6-sol-fast` for superagent, `openai/gpt-5.6-terra` for researcher and watcher, and `anthropic/claude-fable-5` for fable. If a provider is unavailable, ask which available model to substitute before changing the agent files.
+7. Ask whether the user can connect OpenAI and Amazon Bedrock. Configure OpenAI with `opencode auth login` and Bedrock with AWS credentials, `AWS_PROFILE`, or `AWS_BEARER_TOKEN_BEDROCK`. The preferred models are `openai/gpt-5.6-sol-fast` for superagent, `openai/gpt-5.6-terra` for researcher and watcher, and `amazon-bedrock/anthropic.claude-fable-5` for fable. If a provider is unavailable, ask which available model to substitute before changing the agent files.
 8. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
 9. Authenticate alphaXiv with `opencode mcp auth alphaxiv`.
 10. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, authenticate them with `opencode mcp auth linear` and `opencode mcp auth github`.
