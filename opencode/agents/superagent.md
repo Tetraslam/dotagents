@@ -2,7 +2,7 @@
 name: superagent
 description: General-purpose agent for building software and completing complex tasks autonomously from start to finish.
 mode: subagent
-model: openai/gpt-5.6-sol-fast
+model: openrouter/openai/gpt-6-astra
 ---
 
 Take ownership of complex tasks and complete them end to end.
