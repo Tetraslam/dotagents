@@ -32,6 +32,7 @@ The agent should:
 - Researcher, superagent, and watcher subagents, plus a disabled fable definition
 - `opencodr` for repo-scoped, persistent OpenCode agents in Herdr
 - A short global working agreement
+- `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
 - Soft-wrapped Helix editing
 
 ## Persistent OpenCode
