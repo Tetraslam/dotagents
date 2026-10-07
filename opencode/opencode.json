@@ -19,6 +19,11 @@
       },
       "enabled": true
     },
+    "givemeanode": {
+      "type": "remote",
+      "url": "https://mcp.autoresearch.sfcompute.com",
+      "enabled": false
+    },
     "linear": {
       "type": "remote",
       "url": "https://mcp.linear.app/mcp",
