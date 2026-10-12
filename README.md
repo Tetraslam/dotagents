@@ -10,17 +10,17 @@ Point your agent at this repository and ask:
 
 The agent should:
 
-1. Install OpenCode, Herdr, Helix, and the runtime needed for `npx` if they are missing. If the Helix package provides `helix` rather than `hx`, add a durable `hx` wrapper or alias appropriate for the user's environment.
+1. Install OpenCode 2, Herdr 0.9.3 or newer, Helix, and the runtime needed for `npx` if they are missing. Use the [V2 installer](https://opencode.ai/v2/install), or the `@opencode/cli` npm package. Remove competing V1 installations from PATH. If the Helix package provides `helix` rather than `hx`, add a durable `hx` wrapper or alias appropriate for the user's environment.
 2. Install agent-browser with `npm i -g agent-browser && agent-browser install`, then install the Lightpanda binary for the user's platform by following the [engine guide](https://agent-browser.dev/engines/lightpanda). Both engines must work.
 3. Merge `agent-browser/config.json` into `~/.agent-browser/config.json` and copy `agents/skills/agent-browser/` to `~/.agents/skills/agent-browser/`. Preserve unrelated configuration.
 4. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). Preserve existing providers, models, plugins, permissions, and unrelated files.
-5. Run `herdr integration install opencode`, then link `bin/opencodr` into a directory on `PATH` rather than copying it. Preserve an existing command unless the user approves replacing it.
+5. Start OpenCode once to migrate terminal preferences into `~/.config/opencode/cli.json`, then run `herdr integration install opencode`. Herdr 0.9.3 ships V2 support; reinstalling an old Herdr release's integration does not upgrade its plugin. Link `bin/opencodr` into a directory on `PATH` rather than copying it. Preserve an existing command unless the user approves replacing it.
 6. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
 7. Configure OpenRouter and OpenAI with `opencode auth login`. The preferred models are `openrouter/openai/gpt-6-astra` for superagent and `openai/gpt-5.6-terra` for researcher and watcher. If either provider is unavailable, ask which available model to substitute before changing the agent files.
 8. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
 9. Authenticate alphaXiv with `opencode mcp auth alphaxiv`.
 10. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, authenticate them with `opencode mcp auth linear` and `opencode mcp auth github`. Keep SF Compute's `givemeanode` disabled by default; set its `enabled` field to `true` when requested.
-11. Restart OpenCode, run `opencode mcp list`, and fix any integration that does not connect. Verify agent-browser with both its default Lightpanda engine and `--engine chrome`.
+11. Run `opencode reload` and `opencode mcp list`, and fix any integration that does not connect. The shared service must have variables referenced by MCP configuration, such as `FIRECRAWL_API_KEY`; a new terminal's environment alone is insufficient. Restart the TUI after installing its Herdr plugin. Verify agent-browser with both its default Lightpanda engine and `--engine chrome`.
 
 ## Included
 
@@ -30,7 +30,7 @@ The agent should:
 - agent-browser for browser automation, with Lightpanda by default and Chrome when fidelity matters
 - Optional Linear and GitHub integrations
 - Optional SF Compute (`givemeanode`) MCP, disabled by default
-- Researcher, superagent, and watcher subagents, plus a disabled fable definition
+- Researcher, superagent, and watcher subagents
 - `opencodr` for repo-scoped, persistent OpenCode agents in Herdr
 - A short global working agreement
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
@@ -49,8 +49,10 @@ opencodr --detach        # Ensure the main role is running without attaching
 opencodr --takeover main # Replace another writable attachment
 ```
 
-Use ordinary `opencode` for disposable sessions. OpenCode arguments passed
-after `--` apply only when a role is first started.
+OpenCode 2 already persists work in its shared background service. Herdr is an
+optional terminal/workspace layer. Its V2 integration reports state from each
+full-screen TUI; Mini and headless clients do not provide that reporting.
+OpenCode arguments passed after `--` apply only when a role is first started.
 
 Direct attach mirrors the managed agent's terminal title to the outer terminal.
 It also keeps native outer-terminal text selection instead of Herdr's mouse
