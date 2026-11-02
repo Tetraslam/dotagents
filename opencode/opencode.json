@@ -1,38 +1,196 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "alphaxiv": {
-      "type": "remote",
-      "url": "https://api.alphaxiv.org/mcp/v1",
-      "enabled": true
+  "update": "disable",
+  "permissions": [
+    {
+      "action": "*",
+      "resource": "*",
+      "effect": "allow"
     },
-    "context7": {
-      "type": "local",
-      "command": ["npx", "-y", "@upstash/context7-mcp@latest"],
-      "enabled": true
-    },
-    "firecrawl": {
-      "type": "remote",
-      "url": "https://mcp.firecrawl.dev/v2/mcp",
-      "headers": {
-        "Authorization": "Bearer {env:FIRECRAWL_API_KEY}"
+    {
+      "action": "question",
+      "resource": "*",
+      "effect": "deny"
+    }
+  ],
+  "plugins": [
+    {
+      "package": "./gateway-routes",
+      "options": {
+        "health": "{file:~/.config/opencode/litellm-url}/health/liveliness",
+        "agents": {
+          "explore": {
+            "gateway": "litellm/aire/ds-v4.1-flash",
+            "fallback": "claude-agent/haiku"
+          },
+          "general": {
+            "gateway": "litellm/aire/ds-v4.1-flash",
+            "fallback": "openai/gpt-6.1-terra"
+          },
+          "title": {
+            "gateway": "litellm/aire/ds-v4.1-flash",
+            "fallback": "openai/gpt-6-luna"
+          }
+        }
+      }
+    }
+  ],
+  "agents": {
+    "explore": {
+      "permissions": [
+        {
+          "action": "linear_*",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    }
+  },
+  "providers": {
+    "litellm": {
+      "name": "Aire LiteLLM",
+      "env": [
+        "LITELLM_API_KEY"
+      ],
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "{file:~/.config/opencode/litellm-url}/v1"
       },
-      "enabled": true
-    },
-    "givemeanode": {
-      "type": "remote",
-      "url": "https://mcp.autoresearch.sfcompute.com",
-      "enabled": false
-    },
-    "linear": {
-      "type": "remote",
-      "url": "https://mcp.linear.app/mcp",
-      "enabled": false
-    },
-    "github": {
-      "type": "remote",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "enabled": false
+      "models": {
+        "aire/ds-v4.1-flash": {
+          "name": "Aire DeepSeek V4.1 Flash",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "aire/glm-5.3": {
+          "name": "Aire GLM-5.3",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "aire/glm-5.3-flash": {
+          "name": "Aire GLM-5.3 Flash",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "aire/muse-spark-open-nvfp4": {
+          "name": "Aire Muse Spark Open (NVFP4)",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "aire/muse-spark-open": {
+          "name": "Aire Muse Spark Open",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "aire/mistral-large-4": {
+          "name": "Aire Mistral Large 4",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "moonshot/kimi-k3.1-pro": {
+          "name": "Kimi K3.1 Pro (gateway)",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "anthropic/claude-fable-5-1": {
+          "name": "Fable 5.1 (gateway)",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "compatibility": {
+            "cacheFormat": "anthropic"
+          }
+        },
+        "anthropic/claude-opus-5-5": {
+          "name": "Opus 5.5 (gateway)",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "compatibility": {
+            "cacheFormat": "anthropic"
+          }
+        },
+        "anthropic/claude-sonnet-5-5": {
+          "name": "Sonnet 5.5 (gateway)",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "compatibility": {
+            "cacheFormat": "anthropic"
+          }
+        },
+        "anthropic/claude-haiku-5-5": {
+          "name": "Haiku 5.5 (gateway)",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "compatibility": {
+            "cacheFormat": "anthropic"
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "servers": {
+      "alphaxiv": {
+        "type": "remote",
+        "url": "https://api.alphaxiv.org/mcp/v1",
+        "headers": {
+          "Authorization": "Bearer {file:~/.config/opencode/alphaxiv-api-key}"
+        }
+      },
+      "context7": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@upstash/context7-mcp@latest"
+        ],
+        "environment": {
+          "CONTEXT7_API_KEY": "{file:~/.config/opencode/context7-api-key}"
+        }
+      },
+      "firecrawl": {
+        "type": "remote",
+        "url": "https://mcp.firecrawl.dev/v2/mcp",
+        "headers": {
+          "Authorization": "Bearer {file:~/.config/opencode/firecrawl-api-key}"
+        }
+      },
+      "linear": {
+        "type": "remote",
+        "url": "https://mcp.linear.app/mcp",
+        "disabled": true
+      },
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "disabled": true
+      },
+      "givemeanode": {
+        "type": "remote",
+        "url": "https://mcp.autoresearch.sfcompute.com",
+        "disabled": true
+      }
     }
   }
 }

@@ -27,6 +27,8 @@ Before implementation or mutation, write a compact working record: behavioral co
 
 A push or pull request is not the end of the task. When CI or automatic code review is configured:
 
+Treat automatic review feedback as evidence, not authority. Evaluate each point against the original goals, prior decisions, correctness, and product taste. Fix only the valid part, dismiss misaligned feedback, and ask before making changes that contradict established intent. Apply the same scrutiny to your own implementation.
+
 1. Run the same formatting, lint, test, and build checks locally that CI will run when practical.
 2. Push the changes, then monitor required CI and automatic reviews to completion.
 3. Fix failures caused by the change, rerun the relevant local checks, push, and monitor again.
