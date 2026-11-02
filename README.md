@@ -16,7 +16,7 @@ The agent should:
 4. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). Preserve existing providers, models, plugins, permissions, and unrelated files.
 5. Start OpenCode once to migrate terminal preferences into `~/.config/opencode/cli.json`.
 6. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
-7. Configure OpenRouter and OpenAI with `opencode auth login`. The preferred models are `openrouter/openai/gpt-6-astra` for superagent and `openai/gpt-5.6-terra` for researcher and watcher. If either provider is unavailable, ask which available model to substitute before changing the agent files.
+7. Configure OpenRouter and OpenAI with `opencode auth login`. The preferred models are `openrouter/openai/gpt-6-astra` for superagent and `openai/gpt-5.6-terra` for researcher and watcher. If either provider is unavailable, ask which available model to substitute before changing the agent files. To use a Claude subscription, connect the built-in Claude Agent provider with `/connect`.
 8. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
 9. Authenticate alphaXiv with `opencode mcp auth alphaxiv`.
 10. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, authenticate them with `opencode mcp auth linear` and `opencode mcp auth github`. Keep SF Compute's `givemeanode` disabled by default; set its `enabled` field to `true` when requested.
@@ -30,6 +30,7 @@ The agent should:
 - agent-browser for browser automation, with Lightpanda by default and Chrome when fidelity matters
 - Optional Linear and GitHub integrations
 - Optional SF Compute (`givemeanode`) MCP, disabled by default
+- Optional [LiteLLM gateway provider](optional/litellm/setup.md) and Fable subagent
 - Researcher, superagent, and watcher subagents
 - A short global working agreement
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
