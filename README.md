@@ -14,7 +14,7 @@ The agent should:
 2. Install agent-browser with `npm i -g agent-browser && agent-browser install`, then install the Lightpanda binary for the user's platform by following the [engine guide](https://agent-browser.dev/engines/lightpanda). Both engines must work.
 3. Merge `agent-browser/config.json` into `~/.agent-browser/config.json` and copy `agents/skills/agent-browser/` to `~/.agents/skills/agent-browser/`. Preserve unrelated configuration.
 4. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). The config uses the native V2 shape; convert any V1-shaped user settings it merges with rather than mixing formats inside one agent, provider, or MCP entry. Preserve existing providers, models, plugins, permissions, and unrelated files.
-5. Start OpenCode once to migrate terminal preferences into `~/.config/opencode/cli.json`.
+5. Start OpenCode once to migrate terminal preferences into `~/.config/opencode/cli.json`, then merge `opencode/cli.json` into it.
 6. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
 7. Connect OpenAI with **Sign in with ChatGPT**, and the Claude subscription with **Claude Agent** (install Claude Code, run `claude auth login`), both through `/connect`. The agent models are listed [below](#models). If a provider is unavailable, ask which available model to substitute before changing the agent files.
 8. Store API keys in mode-600 files in the OpenCode config directory: `alphaxiv-api-key` (alphaXiv Settings > API Keys), `context7-api-key`, and `firecrawl-api-key`, each without a trailing newline. `opencode.json` reads them with `{file:...}`.
@@ -69,4 +69,5 @@ At Aire, the origin is the prod LiteLLM proxy on the tailnet, and keys come from
 - A short global working agreement
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access
+- Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
 - Soft-wrapped Helix editing
