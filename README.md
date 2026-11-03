@@ -83,6 +83,10 @@ i.example.com {
 }
 ```
 
+## Tell
+
+`tell/` gives every session three tools for working alongside the others on the machine. `who` lists live sessions with a handle (`<directory>/<task>`, so a handle says what a session is doing), task, directory, and state, plus claimed resources. `tell` messages a session by handle or ID: it lands at the recipient's next step boundary like a steering message, without interrupting it, and wakes it if idle; `fyi` waits for its next turn. Messages arrive labeled as coming from a peer agent, and the user's instructions keep precedence. `claim` leases a shared resource such as the tailnet or a GPU so others can see who holds it.
+
 ## Included
 
 - alphaXiv for papers
@@ -96,5 +100,6 @@ i.example.com {
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access, plus its MCP bridge (`x`, disabled until `xurl auth`)
 - Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
+- [Tell](#tell): sessions that find each other, talk, and share resources
 - [Sleep-time](#sleep-time) passes that work ahead while you are away, and [artifacts](#artifacts) published as shareable pages
 - Soft-wrapped Helix editing

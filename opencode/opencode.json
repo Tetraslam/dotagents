@@ -50,6 +50,9 @@
         "url": "{file:~/.config/opencode/zipline-url}",
         "token": "{file:~/.config/opencode/zipline-token}"
       }
+    },
+    {
+      "package": "./tell"
     }
   ],
   "agents": {
