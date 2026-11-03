@@ -53,6 +53,9 @@
     },
     {
       "package": "./tell"
+    },
+    {
+      "package": "./mise-shims"
     }
   ],
   "agents": {

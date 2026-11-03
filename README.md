@@ -103,4 +103,5 @@ i.example.com {
 - [Tell](#tell): sessions that find each other, talk, and share resources
 - [Sleep-time](#sleep-time) passes that work ahead while you are away, and [artifacts](#artifacts) published as shareable pages
 - `/scroll`: doomscroll the X timeline since last time; the agent reads it, keeps the ML and research, checks the big claims, and publishes the stories worth seeing as an artifact (needs the `x` MCP)
+- Per-directory [mise](https://mise.jdx.dev/) tool versions in agent shells (`mise-shims/`); no effect without mise
 - Soft-wrapped Helix editing
