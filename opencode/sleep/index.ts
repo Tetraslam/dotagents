@@ -36,7 +36,12 @@ const PERMISSIONS = [
   { action: "edit", resource: "*", effect: "deny" },
   { action: "subagent", resource: "*", effect: "deny" },
   { action: "question", resource: "*", effect: "deny" },
-  ...["git commit*", "git push*", "git reset*", "git checkout*", "git rebase*", "git merge*", "gh pr *", "gh issue *"].map(
+  ...[
+    "git commit*", "git push*", "git reset*", "git checkout*", "git rebase*", "git merge*", "gh pr *", "gh issue *",
+    "*pnpm i*", "*pnpm install*", "*pnpm add*", "*pnpm dev*", "*pnpm run dev*", "*npm i*", "*npm install*",
+    "*bun install*", "*bun add*", "*uv sync*", "*pip install*", "*docker compose up*", "*docker run*",
+    "*docker start*", "*systemctl*", "*tailscale switch*", "*tailscale up*", "*tailscale down*",
+  ].map(
     (resource) => ({ action: "shell", resource, effect: "deny" }),
   ),
   { action: "linear_save*", resource: "*", effect: "deny" },
@@ -52,7 +57,7 @@ Work on whatever is most valuable, roughly in this order:
 3. Prepare the next step. Predict what the user will most likely ask for next and do the groundwork: gather the facts, sources and file locations, and write the plan or draft so the next turn can act immediately.
 
 Rules:
-- Investigate, do not act. Do not edit files, commit, push, send messages, deploy, or change tickets or any external state. Reading, searching, fetching and running read-only commands or tests are fine.
+- Investigate, do not act. Do not edit or create files, commit, push, send messages, deploy, or change tickets or any external state. Do not install dependencies, start servers, containers or long-running processes, or run setup scripts. Reading, searching, fetching, and running read-only commands or existing tests are fine. If checking something would need setup, report it as [open] with the exact command instead.
 - Do not redo work the conversation already finished.
 - Depth on one or two valuable items beats shallow coverage of many. Stop when more work stops changing the answer.
 - Separate what you verified, with its evidence, from what you infer.
