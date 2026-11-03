@@ -3,8 +3,9 @@ import { createSignal, Show } from "solid-js"
 import { type Brief, Sleep } from "./rpc"
 
 // Shows the session's sleep-time brief under the prompt and offers it through
-// /brief: read it, adopt it into the session, open the fork that wrote it, or
-// dismiss it. `/brief now` starts a pass immediately.
+// /brief: read it in the fork that wrote it, adopt it into the session, or
+// dismiss it. Inside the fork, /brief acts on the original session.
+// `/brief now` starts a pass immediately.
 
 export default Plugin.define({
   id: "dotagents.sleep.tui",
@@ -12,9 +13,12 @@ export default Plugin.define({
     const rpc = context.client.rpc(Sleep)
     const [briefs, setBriefs] = createSignal<Record<string, Brief | null>>({})
 
+    // Inside a sleep fork, act on the session it was forked from.
     const current = () => {
       const route = context.ui.router.current() as any
-      return route?.type === "session" ? (route.sessionID as string) : undefined
+      if (route?.type !== "session") return undefined
+      const session = context.data.session.get(route.sessionID) as any
+      return (session?.title?.startsWith("☾ ") && session.fork?.sessionID) || (route.sessionID as string)
     }
     const put = (sessionID: string, brief: Brief | null) => setBriefs((all) => ({ ...all, [sessionID]: brief }))
     const location = (sessionID: string) => {
@@ -44,6 +48,11 @@ export default Plugin.define({
         }),
       )
 
+    const viewing = (brief: Brief) => {
+      const route = context.ui.router.current() as any
+      return route?.type === "session" && route.sessionID === brief.forkID
+    }
+
     const open = async (sessionID: string, input?: string) => {
       if (input?.trim() === "now") {
         await call("run", sessionID)
@@ -69,18 +78,19 @@ export default Plugin.define({
       const choice = await context.ui.dialog.select({
         title: brief.status === "adopted" ? "☾ Brief (adopted)" : "☾ While you were away",
         options: [
-          { title: "Read", value: "read", description: brief.model },
+          ...(brief.forkID ? [{ title: "Read", value: "read", description: `the brief and the work behind it (${brief.model})` }] : []),
           ...(brief.status === "ready"
             ? [{ title: "Adopt", value: "adopt", description: "attach to this session's instructions" }]
             : []),
-          ...(brief.forkID ? [{ title: "Open fork", value: "fork", description: "see the work behind it" }] : []),
           { title: "Dismiss", value: "dismiss" },
+          ...(viewing(brief) ? [{ title: "Back", value: "back", description: "return to the session" }] : []),
         ],
       } as any)
-      if (choice === "read") await context.ui.dialog.alert({ title: "☾ While you were away", message: brief.brief ?? "" })
+      if (choice === "read" && brief.forkID) context.ui.router.navigate({ type: "session", sessionID: brief.forkID })
       if (choice === "adopt") await call("adopt", sessionID)
       if (choice === "dismiss") await call("dismiss", sessionID)
-      if (choice === "fork" && brief.forkID) context.ui.router.navigate({ type: "session", sessionID: brief.forkID })
+      if ((choice === "back" || ((choice === "adopt" || choice === "dismiss") && viewing(brief))))
+        context.ui.router.navigate({ type: "session", sessionID })
     }
 
     context.keymap.layer(() => ({

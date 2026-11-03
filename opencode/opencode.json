@@ -207,6 +207,14 @@
         "type": "remote",
         "url": "https://mcp.autoresearch.sfcompute.com",
         "disabled": true
+      },
+      "x": {
+        "type": "local",
+        "command": [
+          "xurl",
+          "mcp"
+        ],
+        "disabled": true
       }
     }
   },

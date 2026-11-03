@@ -61,7 +61,7 @@ At Aire, the origin is the prod LiteLLM proxy on the tailnet, and keys come from
 
 When a session has been idle for 20 minutes, `sleep/` forks it into an archived background session and spends the time on what you will most likely want next: re-checking claims that were never backed by evidence, closing open loops, and preparing the next step. It investigates without acting (no edits, commits, pushes, or ticket changes), and runs on `litellm/aire/ds-v4.1-flash` when the gateway answers, otherwise `openai/gpt-6-astra-fast`.
 
-The prompt footer shows `☾ dreaming…` while a pass runs and `☾ brief` when one is ready. `/brief` reads it, adopts it into the session's instructions for the next turn, opens the fork to see the work behind it, or dismisses it. `/brief now` starts a pass immediately. Returning to the session mid-pass cancels it, a pass that finds nothing leaves no trace, and an adopted brief clears itself after the next turn. Tune `idleMinutes`, `minUserTurns`, `maxMinutes`, `dailyRuns`, and `model` in the plugin's options. It needs the shared OpenCode service, since forking goes through the service's own API.
+The prompt footer shows `☾ dreaming…` while a pass runs and `☾ brief` when one is ready. `/brief` opens it in the fork that wrote it (with the work behind it), adopts it into the session's instructions for the next turn, or dismisses it; inside the fork, `/brief` acts on the original session. `/brief now` starts a pass immediately. Returning to the session mid-pass cancels it, a pass that finds nothing leaves no trace, and an adopted brief clears itself after the next turn. Tune `idleMinutes`, `minUserTurns`, `maxMinutes`, `dailyRuns`, and `model` in the plugin's options. It needs the shared OpenCode service, since forking goes through the service's own API.
 
 ## Artifacts
 
@@ -94,7 +94,7 @@ i.example.com {
 - Researcher, superagent, watcher, and fable subagents, with gateway-aware routing for explore, general, and title
 - A short global working agreement
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
-- `tetracover` for README overhauls, and `xurl` for X (Twitter) API access
+- `tetracover` for README overhauls, and `xurl` for X (Twitter) API access, plus its MCP bridge (`x`, disabled until `xurl auth`)
 - Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
 - [Sleep-time](#sleep-time) passes that work ahead while you are away, and [artifacts](#artifacts) published as shareable pages
 - Soft-wrapped Helix editing
