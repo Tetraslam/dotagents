@@ -9,7 +9,10 @@ import { basename } from "node:path"
 //          lands at the recipient's next step boundary without interrupting
 //          it, and wakes it if idle; "fyi" waits for its next turn
 //   claim  takes a lease on a named resource (the tailnet, a GPU, a branch)
-//          so other sessions can see who holds it; minutes 0 releases
+//          that every other session sees; minutes 0 releases
+//
+// Active claims are ambient: while any exist, every other session's model
+// requests carry one line listing them, so no session has to check first.
 //
 // A handle is <directory name>/<task slug>: it says what a session is doing,
 // which is also how peers decide whom to ask.
@@ -89,11 +92,24 @@ export default Plugin.define({
       return page.entries.map((entry) => entry.value as Claim).filter((claim) => claim.until > now)
     }
 
+    await ctx.session.hook("context", async (event: any) => {
+      const now = Date.now()
+      const held = (await claims()).filter((claim) => claim.sessionID !== event.sessionID)
+      if (!held.length) return
+      event.system.push({
+        type: "text",
+        text:
+          "Resources other sessions on this machine have claimed right now: " +
+          held.map((claim) => `${claim.resource} by ${claim.handle} (${claim.sessionID}, ${span(claim.until - now)} left${claim.note ? `: ${claim.note}` : ""})`).join("; ") +
+          ". Do not disrupt these without telling the holder first.",
+      })
+    })
+
     await ctx.tool.transform((editor) => {
       editor.add({
         name: "who",
         description:
-          "List the other live OpenCode sessions on this machine (other agents working for the same user), with each one's handle, task, directory, whether it is running, and any resources claimed. Use it before changing shared state such as the network, tailnet, ports, GPUs, or a branch another session may use.",
+          "List the other live OpenCode sessions on this machine (other agents working for the same user), with each one's handle, task, directory, whether it is running, and any resources claimed. Use it to find a session to tell.",
         input: {
           type: "object",
           properties: { query: { type: "string", description: "Optional text to filter by handle, title, or directory." } },
@@ -142,8 +158,8 @@ export default Plugin.define({
           if (!recipient) throw new Error(`No live session matches "${input.to}". Run who to list them.`)
           if (recipient.info.id === context.sessionID) throw new Error("That is you.")
           const now = Date.now()
-          const recent = (sent.get(context.sessionID) ?? []).filter((at) => now - at < 600_000)
-          if (recent.length >= 30) throw new Error("Rate limited: 30 messages per 10 minutes. Batch what you have to say.")
+          const recent = (sent.get(context.sessionID) ?? []).filter((at) => now - at < 60_000)
+          if (recent.length >= 10) throw new Error("Rate limited: 10 messages a minute. Batch what you have to say.")
           sent.set(context.sessionID, [...recent, now])
 
           const sender = await self(context.sessionID)
@@ -169,7 +185,7 @@ export default Plugin.define({
       editor.add({
         name: "claim",
         description:
-          "Take, extend, or release a lease on a shared resource (for example \"tailnet\", \"gpu0\", \"port:3000\", \"branch:main\") so other sessions see who holds it in `who`. Fails if another live session holds it; then tell the holder instead of proceeding. Use minutes 0 to release.",
+          "Claim a shared resource before disrupting it for other sessions: switching the tailnet, taking a GPU or port, rewriting a branch. Every other session then sees the claim in its context until it expires or you release it (minutes 0). Fails if another live session holds it; then tell the holder instead of proceeding. Ordinary work needs no claim.",
         input: {
           type: "object",
           properties: {
