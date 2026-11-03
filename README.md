@@ -102,4 +102,5 @@ i.example.com {
 - Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
 - [Tell](#tell): sessions that find each other, talk, and share resources
 - [Sleep-time](#sleep-time) passes that work ahead while you are away, and [artifacts](#artifacts) published as shareable pages
+- `/scroll`: doomscroll the X timeline since last time; the agent reads it, keeps the ML and research, checks the big claims, and publishes the stories worth seeing as an artifact (needs the `x` MCP)
 - Soft-wrapped Helix editing
