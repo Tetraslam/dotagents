@@ -27,12 +27,12 @@ The agent should:
 
 | agent | model | on the gateway |
 | --- | --- | --- |
-| explore | `claude-agent/haiku` | `litellm/aire/ds-v4.1-flash` |
+| explore | `openai/gpt-6.1-terra` | `litellm/aire/ds-v4.1-flash` |
 | general | `openai/gpt-6.1-terra` | `litellm/aire/ds-v4.1-flash` |
 | title | `openai/gpt-6-luna` | `litellm/aire/ds-v4.1-flash` |
-| superagent | `openai/gpt-6.1-sol` | |
-| researcher | `openai/gpt-6-astra` | |
-| watcher | `claude-agent/haiku` | |
+| superagent | `claude-agent/opus` | |
+| researcher | `claude-agent/opus` | |
+| watcher | `openai/gpt-6.1-terra` | |
 | fable | `claude-agent/fable` | |
 
 The `gateway-routes` plugin probes the gateway once a minute and switches the first three agents between columns, so the same config works on and off the gateway's network. It only sees built-in agents, and an agent's `model` set in `opencode.json` or an agent file wins over it, so routed agents leave `model` unset. Change routes in the plugin's `agents` option.

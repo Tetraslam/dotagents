@@ -1,7 +1,7 @@
 ---
 description: Polls long-running operations (CI runs, deploys, builds, training jobs, modal/k8s workloads) until they reach a terminal state, then reports. Prefer delegating to this agent over sleep-and-check loops in the main session. Give it: what to check, the exact check command(s), what "done" and "failed" look like, and a deadline. When working on the core repo, the orchestrator must explicitly tell the watcher not to wait for Owners checks.
 mode: subagent
-model: claude-agent/haiku
+model: openai/gpt-6.1-terra
 steps: 100
 permissions:
   - action: edit

@@ -21,7 +21,7 @@
         "agents": {
           "explore": {
             "gateway": "litellm/aire/ds-v4.1-flash",
-            "fallback": "claude-agent/haiku"
+            "fallback": "openai/gpt-6.1-terra"
           },
           "general": {
             "gateway": "litellm/aire/ds-v4.1-flash",
