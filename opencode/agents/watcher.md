@@ -23,6 +23,11 @@ Stop when any of these hits:
 2. The caller's deadline passes. No deadline given: default 30 minutes.
 3. The check command itself errors 3 times in a row.
 
+## PR checks and automatic reviews
+- Automatic reviewers such as Devin finish through their own check run (`Devin Review`). That check reaching a terminal state is the done signal. A clean review posts no comment, so never wait for a comment to appear.
+- Read each check's description, not only its state (`gh pr checks` prints it). A passing check whose description says it skipped, e.g. "Skipped: resolve merge conflicts", means no review ran. Report it as skipped.
+- Ignore `Owners` checks; they wait on humans.
+
 ## Reporting
 Return a single compact report:
 - Status: succeeded | failed | timed out | check broken
