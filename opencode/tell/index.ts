@@ -12,7 +12,8 @@ import { basename } from "node:path"
 //          that every other session sees; minutes 0 releases
 //
 // Active claims are ambient: while any exist, every other session's model
-// requests carry one line listing them, so no session has to check first.
+// requests end with one line listing them, so no session has to check first,
+// and the cached prompt prefix is untouched.
 //
 // A handle is <directory name>/<task slug>: it says what a session is doing,
 // which is also how peers decide whom to ask.
@@ -95,14 +96,26 @@ export default Plugin.define({
     await ctx.session.hook("context", async (event: any) => {
       const now = Date.now()
       const held = (await claims()).filter((claim) => claim.sessionID !== event.sessionID)
-      if (!held.length) return
-      event.system.push({
-        type: "text",
-        text:
-          "Resources other sessions on this machine have claimed right now: " +
-          held.map((claim) => `${claim.resource} by ${claim.handle} (${claim.sessionID}, ${span(claim.until - now)} left${claim.note ? `: ${claim.note}` : ""})`).join("; ") +
-          ". Do not disrupt these without telling the holder first.",
-      })
+      const Message = event.messages[0]?.constructor
+      if (!held.length || !Message) return
+      // Appended after the history, not in the system prompt, so a claim
+      // coming or going leaves the cached prefix intact.
+      event.messages.push(
+        new Message({
+          role: "system",
+          content: [
+            {
+              type: "text",
+              text:
+                "Resources other sessions on this machine have claimed right now: " +
+                held
+                  .map((claim) => `${claim.resource} by ${claim.handle} (${claim.sessionID}, ${span(claim.until - now)} left${claim.note ? `: ${claim.note}` : ""})`)
+                  .join("; ") +
+                ". Do not disrupt these without telling the holder first.",
+            },
+          ],
+        }),
+      )
     })
 
     await ctx.tool.transform((editor) => {
