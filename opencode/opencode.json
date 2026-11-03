@@ -33,6 +33,23 @@
           }
         }
       }
+    },
+    {
+      "package": "./sleep",
+      "options": {
+        "health": "{file:~/.config/opencode/litellm-url}/health/liveliness",
+        "model": {
+          "gateway": "litellm/aire/ds-v4.1-flash",
+          "fallback": "openai/gpt-6-astra-fast"
+        }
+      }
+    },
+    {
+      "package": "./artifacts",
+      "options": {
+        "url": "{file:~/.config/opencode/zipline-url}",
+        "token": "{file:~/.config/opencode/zipline-token}"
+      }
     }
   ],
   "agents": {
@@ -192,5 +209,8 @@
         "disabled": true
       }
     }
+  },
+  "experimental": {
+    "artifacts": true
   }
 }

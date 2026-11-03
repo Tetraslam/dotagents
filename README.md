@@ -17,7 +17,7 @@ The agent should:
 5. Start OpenCode once to migrate terminal preferences into `~/.config/opencode/cli.json`, then merge `opencode/cli.json` into it.
 6. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
 7. Connect OpenAI with **Sign in with ChatGPT**, and the Claude subscription with **Claude Agent** (install Claude Code, run `claude auth login`), both through `/connect`. The agent models are listed [below](#models). If a provider is unavailable, ask which available model to substitute before changing the agent files.
-8. Store API keys in mode-600 files in the OpenCode config directory: `alphaxiv-api-key` (alphaXiv Settings > API Keys), `context7-api-key`, and `firecrawl-api-key`, each without a trailing newline. `opencode.json` reads them with `{file:...}`.
+8. Store API keys in mode-600 files in the OpenCode config directory: `alphaxiv-api-key` (alphaXiv Settings > API Keys), `context7-api-key`, and `firecrawl-api-key`, each without a trailing newline. `opencode.json` reads them with `{file:...}`. Ask whether the user has a Zipline instance for [artifacts](#artifacts).
 9. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
 10. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, set `disabled` to `false` and authenticate them with `/mcps`. Keep SF Compute's `givemeanode` disabled by default.
 11. Ask whether the user has access to a LiteLLM gateway, and if so follow [Gateway](#gateway).
@@ -57,6 +57,32 @@ The `gateway-routes` plugin probes the gateway once a minute and switches the fi
 
 At Aire, the origin is the prod LiteLLM proxy on the tailnet, and keys come from its Okta-backed UI; see `core/infra/pulumi/api-gateway/USAGE.md`. Elsewhere, replace the `models` map with routes your gateway serves (`<origin>/v1/models`), with limits from `<origin>/v1/model/info`, and update the plugin's routes. Claude routes on the gateway set `compatibility.cacheFormat` to `anthropic` so prompt caching works through the OpenAI-compatible API.
 
+## Sleep-time
+
+When a session has been idle for 20 minutes, `sleep/` forks it into an archived background session and spends the time on what you will most likely want next: re-checking claims that were never backed by evidence, closing open loops, and preparing the next step. It investigates without acting (no edits, commits, pushes, or ticket changes), and runs on `litellm/aire/ds-v4.1-flash` when the gateway answers, otherwise `openai/gpt-6-astra-fast`.
+
+The prompt footer shows `☾ dreaming…` while a pass runs and `☾ brief` when one is ready. `/brief` reads it, adopts it into the session's instructions for the next turn, opens the fork to see the work behind it, or dismisses it. `/brief now` starts a pass immediately. Returning to the session mid-pass cancels it, a pass that finds nothing leaves no trace, and an adopted brief clears itself after the next turn. Tune `idleMinutes`, `minUserTurns`, `maxMinutes`, `dailyRuns`, and `model` in the plugin's options. It needs the shared OpenCode service, since forking goes through the service's own API.
+
+## Artifacts
+
+With `experimental.artifacts`, agents publish HTML or Markdown as artifacts. `artifacts/` makes them public pages on a [Zipline](https://zipline.diced.sh/) instance, inlining every file into one page and keeping the link stable across updates. Write the origin and an API token to mode-600 `~/.config/opencode/zipline-url` and `zipline-token`, without trailing newlines. Without them, artifacts stay on the local OpenCode server.
+
+Zipline serves every upload with `Content-Security-Policy: sandbox`, which blocks scripts, so put a route in front of it that serves `/a/<name>` from `/raw/<name>` with a sandbox that allows scripts but not same-origin. Pages then run, but cannot touch Zipline's cookies or API. For Caddy:
+
+```caddyfile
+i.example.com {
+	handle_path /a/* {
+		rewrite * /raw{path}
+		reverse_proxy 127.0.0.1:3200 {
+			header_down Content-Security-Policy "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-downloads"
+		}
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3200
+	}
+}
+```
+
 ## Included
 
 - alphaXiv for papers
@@ -70,4 +96,5 @@ At Aire, the origin is the prod LiteLLM proxy on the tailnet, and keys come from
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access
 - Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
+- [Sleep-time](#sleep-time) passes that work ahead while you are away, and [artifacts](#artifacts) published as shareable pages
 - Soft-wrapped Helix editing
