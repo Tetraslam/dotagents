@@ -204,6 +204,11 @@
         "url": "https://mcp.linear.app/mcp",
         "disabled": true
       },
+      "notion": {
+        "type": "remote",
+        "url": "https://mcp.notion.com/mcp",
+        "disabled": true
+      },
       "github": {
         "type": "remote",
         "url": "https://api.githubcopilot.com/mcp/",

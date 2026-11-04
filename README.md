@@ -19,7 +19,7 @@ The agent should:
 7. Connect OpenAI with **Sign in with ChatGPT**, and the Claude subscription with **Claude Agent** (install Claude Code, run `claude auth login`), both through `/connect`. The agent models are listed [below](#models). If a provider is unavailable, ask which available model to substitute before changing the agent files.
 8. Store API keys in mode-600 files in the OpenCode config directory: `alphaxiv-api-key` (alphaXiv Settings > API Keys), `context7-api-key`, and `firecrawl-api-key`, each without a trailing newline. `opencode.json` reads them with `{file:...}`. Ask whether the user has a Zipline instance for [artifacts](#artifacts).
 9. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
-10. Keep Linear and GitHub disabled unless the user wants the work integrations. If enabled, set `disabled` to `false` and authenticate them with `/mcps`. Keep SF Compute's `givemeanode` disabled by default.
+10. Keep Linear, GitHub, and Notion disabled unless the user wants the work integrations. If enabled, set `disabled` to `false` and authenticate them with `/mcps`. Keep SF Compute's `givemeanode` disabled by default.
 11. Ask whether the user has access to a LiteLLM gateway, and if so follow [Gateway](#gateway).
 12. Run `opencode mcp list`, and fix any integration that does not connect. Verify agent-browser with both its default Lightpanda engine and `--engine chrome`.
 
@@ -93,7 +93,7 @@ i.example.com {
 - Context7 for current library documentation
 - Firecrawl for web research
 - agent-browser for browser automation, with Lightpanda by default and Chrome when fidelity matters
-- Optional Linear and GitHub integrations
+- Optional Linear, GitHub, and Notion integrations
 - Optional SF Compute (`givemeanode`) MCP, disabled by default
 - Researcher, superagent, watcher, and fable subagents, with gateway-aware routing for explore, general, and title
 - A short global working agreement
