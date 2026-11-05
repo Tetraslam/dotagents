@@ -56,6 +56,14 @@
     },
     {
       "package": "./mise-shims"
+    },
+    {
+      "package": "./pr",
+      "options": {
+        "require": {
+          "aire-dot-ai/core": ["Devin Review"]
+        }
+      }
     }
   ],
   "agents": {
