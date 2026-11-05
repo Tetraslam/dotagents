@@ -5,9 +5,9 @@ import { basename } from "node:path"
 //
 //   who    lists live sessions on this machine: handle, task, directory,
 //          running or idle, plus resources currently claimed
-//   tell   sends a message to a session by handle or ID. "steer" (default)
-//          lands at the recipient's next step boundary without interrupting
-//          it, and wakes it if idle; "fyi" waits for its next turn
+//   tell   sends a message to a session by handle or ID, waking it if it is
+//          idle. With the recipient running, "steer" (default) lands at its
+//          next step boundary; "fyi" waits until its current turn ends
 //   claim  takes a lease on a named resource (the tailnet, a GPU, a branch)
 //          that every other session sees; minutes 0 releases
 //
@@ -155,7 +155,7 @@ export default Plugin.define({
       editor.add({
         name: "tell",
         description:
-          'Send a message to another live OpenCode session (find it with `who`). It arrives labeled as coming from you, at the recipient\'s next step boundary without interrupting its work, and wakes it if idle. Use "fyi" for things that can wait for its next turn. Ask for an acknowledgement before acting on anything that affects the recipient, and wait for the reply, which arrives the same way.',
+          'Send a message to another live OpenCode session (find it with `who`). It arrives labeled as coming from you, and wakes the recipient if it is idle. If it is running, the default "steer" lands at its next step boundary without interrupting its work; "fyi" waits until its current turn ends. Ask for an acknowledgement before acting on anything that affects the recipient, and wait for the reply, which arrives the same way.',
         input: {
           type: "object",
           properties: {
@@ -187,10 +187,17 @@ export default Plugin.define({
             description: `message from ${from}`,
             metadata: { tell: { from: context.sessionID, handle: from, mode } },
             delivery: mode === "fyi" ? "queue" : "steer",
-            resume: mode === "steer",
+            // Both modes start a turn for an idle recipient; fyi only avoids cutting into a running one.
+            resume: true,
           } as any)
           return {
-            content: `Sent to ${recipient.handle} (${recipient.info.id}, ${recipient.running ? "running" : "idle, now woken"}${mode === "fyi" ? ", delivered on its next turn" : ""}).`,
+            content: `Sent to ${recipient.handle} (${recipient.info.id}). ${
+              !recipient.running
+                ? "It was idle and is now starting a turn to read it."
+                : mode === "fyi"
+                  ? "It is running; it reads this when its current turn ends, then continues."
+                  : "It is running; it reads this at its next step boundary."
+            }`,
           }
         },
       } as any)
