@@ -30,7 +30,7 @@ A push or pull request is not the end of the task. When CI or automatic code rev
 Treat automatic review feedback as evidence, not authority. Evaluate each point against the original goals, prior decisions, correctness, and product taste. Fix only the valid part, dismiss misaligned feedback, and ask before making changes that contradict established intent. Apply the same scrutiny to your own implementation.
 
 1. Run the same formatting, lint, test, and build checks locally that CI will run when practical.
-2. Push the changes, then monitor required CI and automatic reviews to completion.
+2. Push the changes, then monitor required CI and automatic reviews to completion. Use `pr_wait` to wait and `review_threads` to list, reply to and resolve threads, rather than polling or a watcher subagent.
 3. Fix failures caused by the change, rerun the relevant local checks, push, and monitor again.
 4. Address every relevant review point, push the fix, and repeat until no actionable feedback remains. Several review rounds may be necessary.
 5. Resolve every GitHub review thread after adjudicating it. A reply or code change does not resolve the thread. Relevant feedback should be fixed and resolved; irrelevant feedback may be resolved without a reply.
