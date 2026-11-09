@@ -137,8 +137,8 @@
             "output": 131072
           }
         },
-        "anthropic/claude-fable-5-1": {
-          "name": "Fable 5.1 (gateway)",
+        "anthropic/claude-fable-5-2": {
+          "name": "Fable 5.2 (gateway)",
           "limit": {
             "context": 1000000,
             "output": 128000
