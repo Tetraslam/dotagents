@@ -7,6 +7,7 @@
 - When work is complete on a non-default branch, commit and push only the task's changes. On `main`, `master`, or another default branch, ask before committing or pushing.
 - Ask only when a consequential choice cannot be inferred or safely reversed.
 - Use current documentation for libraries, APIs, and tools.
+- For a new project with no database specified, default to Convex. Existing projects keep their current database.
 - Keep status updates and final reports concise and factual.
 
 ## Programming
