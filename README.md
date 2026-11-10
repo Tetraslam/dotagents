@@ -57,12 +57,6 @@ The `gateway-routes` plugin probes the gateway once a minute and switches the fi
 
 At Aire, the origin is the prod LiteLLM proxy on the tailnet, and keys come from its Okta-backed UI; see `core/infra/pulumi/api-gateway/USAGE.md`. Elsewhere, replace the `models` map with routes your gateway serves (`<origin>/v1/models`), with limits from `<origin>/v1/model/info`, and update the plugin's routes. Claude routes on the gateway set `compatibility.cacheFormat` to `anthropic` so prompt caching works through the OpenAI-compatible API.
 
-## Sleep-time
-
-When a session has been idle for 20 minutes, `sleep/` forks it into an archived background session and spends the time on what you will most likely want next: re-checking claims that were never backed by evidence, closing open loops, and preparing the next step. It investigates without acting (no edits, commits, pushes, or ticket changes), and runs on `litellm/aire/ds-v4.1-flash` when the gateway answers, otherwise `openai/gpt-6-astra-fast`.
-
-The prompt footer shows `☾ dreaming…` while a pass runs and `☾ brief` when one is ready. `/brief` opens it in the fork that wrote it (with the work behind it), adopts it into the session's instructions for the next turn, or dismisses it; inside the fork, `/brief` acts on the original session. `/brief now` starts a pass immediately. Returning to the session mid-pass cancels it, a pass that finds nothing leaves no trace, and an adopted brief clears itself after the next turn. Tune `idleMinutes`, `minUserTurns`, `maxMinutes`, `dailyRuns`, and `model` in the plugin's options. It needs the shared OpenCode service, since forking goes through the service's own API.
-
 ## Artifacts
 
 With `experimental.artifacts`, agents publish HTML or Markdown as artifacts. `artifacts/` makes them public pages on a [Zipline](https://zipline.diced.sh/) instance, inlining every file into one page and keeping the link stable across updates. Write the origin and an API token to mode-600 `~/.config/opencode/zipline-url` and `zipline-token`, without trailing newlines. Without them, artifacts stay on the local OpenCode server.
@@ -101,7 +95,7 @@ i.example.com {
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access, plus its MCP bridge (`x`, disabled until `xurl auth`)
 - Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
 - [Tell](#tell): sessions that find each other, talk, and share resources
-- [Sleep-time](#sleep-time) passes that work ahead while you are away, and [artifacts](#artifacts) published as shareable pages
+- [Artifacts](#artifacts) published as shareable pages
 - `/scroll`: doomscroll the X timeline since last time; the agent reads it, keeps the ML and research, checks the big claims, and publishes the stories worth seeing as an artifact (needs the `x` MCP)
 - Per-directory [mise](https://mise.jdx.dev/) tool versions in agent shells (`mise-shims/`); no effect without mise
 - Soft-wrapped Helix editing
