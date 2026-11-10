@@ -1,6 +1,7 @@
 import { Plugin } from "@opencode/plugin"
 import { randomUUID } from "node:crypto"
 import { basename } from "node:path"
+import { Tell } from "./rpc"
 
 // Lets OpenCode sessions find each other, talk, and share resources.
 //
@@ -13,10 +14,13 @@ import { basename } from "node:path"
 //          that every other session sees; minutes 0 releases
 //
 // Cosigned relays: tell with cosign true is for passing on something the user
-// said. It asks permission in the sender's session with the exact text to be
-// delivered, the sender, and the recipient in its metadata; tui.tsx shows
-// all of it to the user and answers only on an explicit y or n. Only on approval does the message go into the recipient as a
-// user prompt, the same path as the user typing there, prefixed
+// said. The tool records a pending request in plugin storage with the exact
+// text to be delivered, the sender, and the recipient, emits it over the
+// dotagents.tell RPC, and waits until the record holds a decision. Only the
+// RPC's answer method writes one, and only tui.tsx calls it: a dialog in the
+// TUI viewing the sender session or its root session shows all of it and
+// answers on an explicit y or n. Only on approval does the message go into
+// the recipient as a user prompt, the same path as the user typing there, prefixed
 // "(relayed from <sender>, approved by me)". A rejection or timeout delivers
 // nothing. Normal tells stay peer-labeled synthetic messages, with lookalike
 // relay prefixes and message tags in their text neutralized.
@@ -37,6 +41,18 @@ import { basename } from "node:path"
 // as live. cosignMinutes (default 10): how long a cosign waits for the user.
 
 type Options = { liveHours?: number; cosignMinutes?: number }
+type Cosign = {
+  id: string
+  sessionID: string
+  rootID: string
+  from: string
+  to: string
+  handle: string
+  title: string
+  text: string
+  asked: number
+  status: "pending" | "approved" | "rejected" | "expired" | "cancelled"
+}
 type Claim = { resource: string; sessionID: string; handle: string; until: number; note?: string }
 
 const slug = (title: string | undefined) =>
@@ -60,7 +76,6 @@ const ago = (ms: number) => {
   return `${Math.round(minutes / 60)}h ago`
 }
 
-const COSIGN = "tell.cosign"
 const RELAY = /\(\s*relayed\s+from\b[^)]*\bapproved\s+by\b[^)]*\)/gi
 
 const relayed = (from: string, text: string) => `(relayed from ${from}, approved by me)\n\n${text}`
@@ -141,17 +156,70 @@ export default Plugin.define({
       return page.entries.map((entry) => entry.value as Claim).filter((claim) => claim.until > now)
     }
 
-    // A cosign always reaches the user: the "*" allow rule, a saved "always",
-    // or a session rule must not approve one silently.
-    await ctx.permission.hook("evaluate", (event: any) => {
-      if (event.action !== COSIGN) return
-      event.effect = "ask"
-      const meta = event.metadata?.cosign
-      if (meta)
-        event.message =
-          `Deliver this to "${meta.title}" (${meta.handle}, ${meta.to}) as your own message?\n` +
-          `Relayed by ${meta.from}.\n\n${meta.text}`
-    })
+    const fields = ({ status, ...request }: Cosign) => request
+
+    const rpc = await ctx.rpc.register(Tell, {
+      pending: async () => {
+        const page = await ctx.storage.scan({ prefix: "cosign:", limit: 200 })
+        const requests = page.entries.map((entry) => entry.value as Cosign).filter((item) => item.status === "pending")
+        return { requests: requests.map(fields) }
+      },
+      answer: async (input: any) => {
+        const key = "cosign:" + String(input.id)
+        const record = (await ctx.storage.get(key)) as Cosign | undefined
+        if (record?.status !== "pending") return { accepted: false }
+        await ctx.storage.set(key, { ...record, status: input.approve === true ? "approved" : "rejected" })
+        return { accepted: true }
+      },
+    } as any)
+
+    // Waits for the user's answer to a cosign; any outcome but approval throws.
+    const cosign = async (request: Omit<Cosign, "status">, signal?: AbortSignal) => {
+      const key = "cosign:" + request.id
+      await ctx.storage.set(key, { ...request, status: "pending" })
+      await rpc.events.emit("asked", request as any)
+      const deadline = request.asked + cosignMs
+      let status: Cosign["status"] = "pending"
+      try {
+        while (status === "pending") {
+          await new Promise((done) => setTimeout(done, 400))
+          status = ((await ctx.storage.get(key)) as Cosign | undefined)?.status ?? "cancelled"
+          if (status !== "pending") break
+          if (signal?.aborted || Date.now() > deadline) {
+            status = signal?.aborted ? "cancelled" : "expired"
+            await ctx.storage.set(key, { ...request, status })
+          }
+        }
+      } finally {
+        await rpc.events.emit("settled", { id: request.id }).catch(() => {})
+      }
+      // Settled records are history; keep storage from growing without bound.
+      void ctx.storage.remove(key).catch(() => {})
+      if (status === "approved") return
+      throw new Error(
+        status === "rejected"
+          ? "The user rejected this cosign. Nothing was delivered."
+          : status === "expired"
+            ? `The user did not answer within ${Math.round(cosignMs / 60_000)} minutes. Nothing was delivered.`
+            : "The cosign was cancelled. Nothing was delivered.",
+      )
+    }
+
+    // A subagent's handle names its root session, where the user is.
+    const origin = async (sessionID: string) => {
+      const get = async (id: string) => {
+        const result: any = await ctx.session.get({ sessionID: id } as any)
+        return result?.data ?? result
+      }
+      const info = await get(sessionID)
+      let root = info
+      for (let depth = 0; root?.parentID && depth < 10; depth++) root = await get(root.parentID)
+      const handle = (await self(root.id))?.handle ?? root.id
+      return {
+        rootID: String(root.id),
+        from: root.id === info.id ? handle : `${handle} › subagent "${info.title ?? "untitled"}"`,
+      }
+    }
 
     const inspect = async (sessionID: string, ids: string[]) => {
       if (ids.every((id) => delivered.has(id))) return
@@ -284,44 +352,22 @@ export default Plugin.define({
           const metadata = { tell: { from: context.sessionID, handle: from, mode, sentAt: Date.now(), cosign: input.cosign === true } }
 
           if (input.cosign === true) {
-            // Subagent sessions are not where the user is watching, and their
-            // permission asks can be answered without the user seeing them.
-            if (!sender)
-              throw new Error("cosign works only from a top-level session the user is watching. Ask your parent session to relay it.")
-            const id = randomUUID()
-            const text = relayed(from, String(input.message))
-            const timer = setTimeout(async () => {
-              const pending: any = await ctx.permission.list({ sessionID: context.sessionID } as any).catch(() => [])
-              const requests: any[] = Array.isArray(pending) ? pending : (pending?.data ?? [])
-              const request = requests.find((item) => item.metadata?.cosign?.id === id)
-              if (request)
-                await ctx.permission
-                  .reply({
-                    sessionID: context.sessionID,
-                    requestID: request.id,
-                    decision: "reject",
-                    message: `The user did not answer within ${Math.round(cosignMs / 60_000)} minutes. Nothing was delivered.`,
-                  } as any)
-                  .catch(() => {})
-            }, cosignMs)
-            try {
-              // Resolves only once the user approves.
-              await ctx.permission.assert({
+            const { rootID, from: relayer } = await origin(context.sessionID)
+            const text = relayed(relayer, String(input.message))
+            await cosign(
+              {
+                id: randomUUID(),
                 sessionID: context.sessionID,
-                agent: context.agent,
-                source: { type: "tool", messageID: context.messageID, id: context.id },
-                action: COSIGN,
-                resources: [recipient.handle],
-                save: [],
-                metadata: {
-                  cosign: { id, from, to: recipient.info.id, handle: recipient.handle, title: recipient.info.title ?? "untitled", text },
-                },
-              } as any)
-            } catch (error) {
-              throw new Error(`The user did not approve this cosign, so nothing was delivered. ${error instanceof Error ? error.message : ""}`.trim())
-            } finally {
-              clearTimeout(timer)
-            }
+                rootID,
+                from: relayer,
+                to: recipient.info.id,
+                handle: recipient.handle,
+                title: recipient.info.title ?? "untitled",
+                text,
+                asked: Date.now(),
+              },
+              context.signal,
+            )
             metadata.tell.sentAt = Date.now()
             await ctx.session.prompt({ sessionID: recipient.info.id, text, metadata, delivery, resume: true } as any)
             return {

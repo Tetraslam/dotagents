@@ -1,17 +1,24 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import { createSignal, onMount, Show } from "solid-js"
+import { Tell } from "./rpc"
 
-// The approval half of tell's cosign. The server part asks permission for
-// "tell.cosign" with the exact text in its metadata; this shows that text in
-// full, in the TUI viewing the sender session, and answers only on an
-// explicit y or n. Escape leaves the request pending (the built-in permission
-// prompt stays below it); /cosign reopens it.
+// The approval half of tell's cosign, and its only prompt. The server part
+// emits each cosign over the dotagents.tell RPC and waits for an answer; this
+// shows the exact text in full in the TUI viewing the sender session, or its
+// root session for a subagent, and answers only on an explicit y or n.
+// Escape leaves the request pending; /cosign reopens it.
 
 type Request = {
   id: string
   sessionID: string
-  cosign: { from: string; to: string; handle: string; title: string; text: string }
+  rootID: string
+  from: string
+  to: string
+  handle: string
+  title: string
+  text: string
+  asked: number
 }
 
 // Keys pressed this soon after the dialog opens were typed before it was seen.
@@ -22,18 +29,26 @@ export default Plugin.define({
   setup(context) {
     const [pending, setPending] = createSignal<Request[]>([])
     const opened = new Set<string>()
-    const client: any = context.client
+    let showing: string | undefined
+    const tell: any = (context.client as any).rpc(Tell)
+    const add = (request: Request) => {
+      if (pending().some((item) => item.id === request.id)) return false
+      setPending((list) => [...list, request])
+      return true
+    }
+    const remove = (id: string) => setPending((list) => list.filter((item) => item.id !== id))
 
     const answer = async (request: Request, approve: boolean) => {
-      setPending((list) => list.filter((item) => item.id !== request.id))
-      const result = await client.permission
-        .reply({ sessionID: request.sessionID, requestID: request.id, decision: approve ? "once" : "reject" })
+      remove(request.id)
+      const result = await tell
+        .answer({ id: request.id, approve })
+        .then((output: any) => (output?.accepted === false ? { error: "it was already settled" } : output))
         .catch((error: unknown) => ({ error }))
       context.ui.toast.show({
         message: result?.error
           ? `Cosign answer failed: ${String(result.error)}`
           : approve
-            ? `Cosign approved: delivered to ${request.cosign.title}`
+            ? `Cosign approved: delivered to ${request.title}`
             : "Cosign rejected: nothing delivered",
         variant: result?.error ? "error" : approve ? "success" : "info",
       } as any)
@@ -42,7 +57,7 @@ export default Plugin.define({
     const Approval = (props: { request: Request; close: () => void }) => {
       const plugin = usePlugin()
       const shown = Date.now()
-      const { cosign } = props.request
+      const cosign = props.request
       const rows = (plugin.renderer as any).height ?? 40
       const cols = (plugin.renderer as any).width ?? 100
       const estimate = cosign.text
@@ -86,32 +101,42 @@ export default Plugin.define({
 
     const open = (request: Request) => {
       opened.add(request.id)
+      showing = request.id
       context.ui.dialog.set({ size: "large" } as any)
       context.ui.dialog.show(() => <Approval request={request} close={() => context.ui.dialog.clear()} />)
     }
 
-    const viewing = (sessionID: string) => {
+    const here = (request: Request, sessionID: string | undefined) =>
+      sessionID === request.sessionID || sessionID === request.rootID
+
+    const viewing = (request: Request) => {
       const route: any = context.ui.router.current()
-      return route?.type === "session" && route.sessionID === sessionID
+      return route?.type === "session" && here(request, route.sessionID)
     }
 
-    const stopAsked = context.data.on("permission.asked", (event: any) => {
-      const data = event.data
-      if (data?.action !== "tell.cosign" || !data.metadata?.cosign) return
-      if (pending().some((item) => item.id === data.id)) return
-      const request: Request = { id: data.id, sessionID: data.sessionID, cosign: data.metadata.cosign }
-      setPending((list) => [...list, request])
-      if (viewing(request.sessionID)) open(request)
+    const stopAsked = tell.events.on("asked", (event: any) => {
+      const request = event.data as Request
+      if (add(request) && viewing(request)) open(request)
     })
-    const stopReplied = context.data.on("permission.replied", (event: any) => {
-      setPending((list) => list.filter((item) => item.id !== event.data?.requestID))
+    // Answered elsewhere, timed out, or cancelled: close it here too.
+    const stopSettled = tell.events.on("settled", (event: any) => {
+      remove(event.data.id)
+      if (showing === event.data.id) {
+        showing = undefined
+        context.ui.dialog.clear()
+      }
     })
+    // Cosigns asked before this TUI started.
+    void tell
+      .pending({})
+      .then((output: any) => (output?.requests ?? []).forEach((request: Request) => add(request)))
+      .catch(() => {})
 
     // Opens a cosign when the user arrives at the session that asked for it.
     context.ui.slot({
       append: "session.composer.top",
       render: (props: any) => {
-        const first = () => pending().find((item) => item.sessionID === props.sessionID && !opened.has(item.id))
+        const first = () => pending().find((item) => here(item, props.sessionID) && !opened.has(item.id))
         return (
           <Show when={first()}>
             {(request: any) => {
@@ -134,7 +159,7 @@ export default Plugin.define({
           slash: { name: "cosign" },
           run: () => {
             const route: any = context.ui.router.current()
-            const request = pending().find((item) => item.sessionID === route?.sessionID) ?? pending()[0]
+            const request = pending().find((item) => here(item, route?.sessionID)) ?? pending()[0]
             if (request) open(request)
             else context.ui.toast.show({ message: "No cosign is waiting." } as any)
           },
@@ -143,8 +168,10 @@ export default Plugin.define({
     }))
 
     return () => {
+      // A dialog left open after a reload would have lost its y/n bindings.
+      if (showing) context.ui.dialog.clear()
       stopAsked()
-      stopReplied()
+      stopSettled()
     }
   },
 })
