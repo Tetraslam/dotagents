@@ -91,6 +91,7 @@ i.example.com {
 - Optional SF Compute (`givemeanode`) MCP, disabled by default
 - Researcher, superagent, watcher, and fable subagents, with gateway-aware routing for explore, general, and title
 - A short global working agreement
+- `critique` for an independent critic loop (evidence, references, a quality bar) until only nitpicks remain
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access, plus its MCP bridge (`x`, disabled until `xurl auth`)
 - [Tell](#tell): sessions that find each other, talk, and share resources
