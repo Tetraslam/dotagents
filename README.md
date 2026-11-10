@@ -93,7 +93,6 @@ i.example.com {
 - A short global working agreement
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access, plus its MCP bridge (`x`, disabled until `xurl auth`)
-- Notifications that know what you are looking at: on Hyprland, nothing while you view the session, only blocking prompts and errors while you are in another terminal tab, and long finished turns once you leave the terminal (`attention/`)
 - [Tell](#tell): sessions that find each other, talk, and share resources
 - [Artifacts](#artifacts) published as shareable pages
 - `/scroll`: doomscroll the X timeline since last time; the agent reads it, keeps the ML and research, checks the big claims, and publishes the stories worth seeing as an artifact (needs the `x` MCP)
