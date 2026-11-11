@@ -5,6 +5,7 @@
 - Prefer the smallest correct change and carry it through verification.
 - Preserve unrelated work and never use destructive commands without explicit approval.
 - When work is complete on a non-default branch, commit and push only the task's changes. On `main`, `master`, or another default branch, ask before committing or pushing.
+- If commit signing fails because the signing agent (such as 1Password) is locked, commit unsigned with `git commit --no-gpg-sign` rather than waiting for the user to unlock it.
 - Ask only when a consequential choice cannot be inferred or safely reversed.
 - Use current documentation for libraries, APIs, and tools.
 - For a new project with no database specified, default to Convex. Existing projects keep their current database.
