@@ -16,6 +16,11 @@
       "action": "websearch",
       "resource": "*",
       "effect": "deny"
+    },
+    {
+      "action": "webfetch",
+      "resource": "*",
+      "effect": "deny"
     }
   ],
   "plugins": [
