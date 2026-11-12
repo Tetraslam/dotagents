@@ -73,6 +73,15 @@
     }
   },
   "providers": {
+    "claude-agent": {
+      "models": {
+        "fable": {
+          "limit": {
+            "context": 1000000
+          }
+        }
+      }
+    },
     "litellm": {
       "name": "Aire LiteLLM",
       "env": [
