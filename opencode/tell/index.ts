@@ -261,26 +261,34 @@ export default Plugin.define({
 
       const now = Date.now()
       const held = (await claims()).filter((claim) => claim.sessionID !== event.sessionID)
-      const Message = event.messages[0]?.constructor
+      // The context messages are role-specific classes (the user one only
+      // accepts role "user"), so build the notice from a user message's class.
+      // Constructing it with role "system" fails schema validation and kills
+      // the whole model request.
+      const Message = event.messages.find((message: any) => message.role === "user")?.constructor
       if (!held.length || !Message) return
       // Appended after the history, not in the system prompt, so a claim
       // coming or going leaves the cached prefix intact.
-      event.messages.push(
-        new Message({
-          role: "system",
+      let notice
+      try {
+        notice = new Message({
+          role: "user",
           content: [
             {
               type: "text",
               text:
-                "Resources other sessions on this machine have claimed right now: " +
+                "<system-reminder>Resources other sessions on this machine have claimed right now: " +
                 held
                   .map((claim) => `${claim.resource} by ${claim.handle} (${claim.sessionID}, ${span(claim.until - now)} left${claim.note ? `: ${claim.note}` : ""})`)
                   .join("; ") +
-                ". Do not disrupt these without telling the holder first.",
+                ". Do not disrupt these without telling the holder first.</system-reminder>",
             },
           ],
-        }),
-      )
+        })
+      } catch {
+        return
+      }
+      event.messages.push(notice)
     })
 
     await ctx.tool.transform((editor) => {
