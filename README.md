@@ -91,6 +91,7 @@ To pass on something you said, a session uses `tell` with `cosign: true`. In the
 - agent-browser for browser automation, with Lightpanda by default and Chrome when fidelity matters
 - Optional Linear, GitHub, and Notion integrations
 - Optional SF Compute (`givemeanode`) MCP, disabled by default
+- Optional [Financial Datasets](https://mcp.financialdatasets.ai/) MCP (`financialdatasets`: prices, filings, fundamentals), disabled by default. Enable it per project and sign in with `/mcps`
 - Researcher, superagent, watcher, and fable subagents, with gateway-aware routing for explore, general, and title
 - A short global working agreement
 - `critique` for an independent critic loop (evidence, references, a quality bar) until only nitpicks remain

@@ -226,6 +226,11 @@
         "url": "https://api.githubcopilot.com/mcp/",
         "disabled": true
       },
+      "financialdatasets": {
+        "disabled": true,
+        "type": "remote",
+        "url": "https://mcp.financialdatasets.ai/"
+      },
       "givemeanode": {
         "type": "remote",
         "url": "https://mcp.autoresearch.sfcompute.com",
