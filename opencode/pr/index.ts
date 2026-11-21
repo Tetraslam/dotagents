@@ -6,6 +6,7 @@ import { execFile } from "node:child_process"
 //   pr_wait         blocks until every check on the PR's current head has
 //                   finished (ignoring human-approval checks such as Owners),
 //                   or the PR is merged or closed, then reports failures,
+//                   what merging still needs from a person (a draft, a review),
 //                   checks that passed only by skipping, and unresolved review
 //                   threads. A new push restarts the wait on the new head.
 //   review_threads  lists unresolved review threads, or replies to and
@@ -16,7 +17,8 @@ import { execFile } from "node:child_process"
 //   require  { "<owner>/<repo>": ["Check name", ...] }: checks that must
 //            appear on the head before it can count as finished, so a PR
 //            whose reviewer check has not been created yet is not reported
-//            done. Example: { "aire-dot-ai/core": ["Devin Review"] }.
+//            done. Not waited for on a draft, where reviewers do not run.
+//            Example: { "aire-dot-ai/core": ["Devin Review"] }.
 
 type Options = { ignore?: string; require?: Record<string, string[]> }
 type Check = { name: string; state: string; bucket: string; description: string; link: string; workflow: string }
@@ -146,7 +148,7 @@ export default Plugin.define({
 
           for (;;) {
             const pr = JSON.parse(
-              await run(["pr", "view", String(number), "--repo", repo, "--json", "state,headRefOid,mergeStateStatus,mergeCommit,url,title"], cwd, signal),
+              await run(["pr", "view", String(number), "--repo", repo, "--json", "state,headRefOid,mergeStateStatus,mergeCommit,url,title,isDraft,reviewDecision"], cwd, signal),
             )
             if (pr.headRefOid !== head) {
               head = pr.headRefOid
@@ -163,7 +165,8 @@ export default Plugin.define({
             }
             const relevant = checks.filter((check) => !ignore.test(check.name))
             const pending = relevant.filter((check) => !TERMINAL.has(check.bucket))
-            const missing = require.filter((name) => !relevant.some((check) => check.name === name))
+            // Reviewer checks are not created on a draft, so waiting for one there never ends.
+            const missing = pr.isDraft ? [] : require.filter((name) => !relevant.some((check) => check.name === name))
             const closed = pr.state !== "OPEN"
             // A head with no checks yet may simply not have been picked up; give CI two minutes to start.
             const settled = relevant.length > 0 || Date.now() - headSince > 120_000
@@ -196,6 +199,17 @@ export default Plugin.define({
                 lines.push(
                   `Still waiting on: ${[...pending.map((check) => `${check.name} (${check.state})`), ...missing.map((name) => `${name} (not created yet)`)].join(", ")}.`,
                 )
+              // What only a person can do next, so a green PR is not mistaken for a mergeable one.
+              if (!closed) {
+                const human = [
+                  ...(pr.isDraft
+                    ? [`it is a draft${require.length ? `, so ${require.join(", ")} has not run; mark it ready and wait again` : ""}`]
+                    : []),
+                  ...(pr.reviewDecision === "REVIEW_REQUIRED" ? ["it needs an approving review"] : []),
+                  ...(pr.reviewDecision === "CHANGES_REQUESTED" ? ["a reviewer requested changes"] : []),
+                ]
+                if (human.length) lines.push(`Not mergeable yet: ${human.join("; ")}.`)
+              }
               if (failed.length)
                 lines.push(`Failed:\n${failed.map((check) => `- ${check.name}: ${check.description || check.state} ${check.link}`).join("\n")}`)
               if (skipped.length)
