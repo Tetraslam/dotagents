@@ -96,6 +96,7 @@ To pass on something you said, a session uses `tell` with `cosign: true`. In the
 - A short global working agreement
 - `critique` for an independent critic loop (evidence, references, a quality bar) until only nitpicks remain
 - `distill-notes` for saving conversation insights with their reasoning, evidence, and decision status
+- `sakuga` for making and checking any media (images, video, voice, 3D, sprite sheets) from inside a session. It's a separate project with its own CLI, linked in as a skill, and isn't published yet
 - `tetracover` for README overhauls, and `xurl` for X (Twitter) API access, plus its MCP bridge (`x`, disabled until `xurl auth`)
 - [Tell](#tell): sessions that find each other, talk, and share resources
 - [Artifacts](#artifacts) published as shareable pages
