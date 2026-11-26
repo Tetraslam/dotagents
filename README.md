@@ -31,7 +31,8 @@ The agent should:
 | general | `openai/gpt-6.1-terra` | `litellm/aire/ds-v4.1-flash` |
 | title | `openai/gpt-6-luna` | `litellm/aire/ds-v4.1-flash` |
 | superagent | `claude-agent/opus` | |
-| researcher | `openai/gpt-6-astra` | |
+| researcher | `openai/gpt-6.2-astra` | |
+| astra | `openai/gpt-6.2-astra` | |
 | watcher | `openai/gpt-6.1-terra` | |
 | fable | `claude-agent/fable` | |
 
