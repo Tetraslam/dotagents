@@ -16,7 +16,7 @@ The agent should:
 4. Merge `opencode/` into the user's global OpenCode config directory (normally `~/.config/opencode/`). The config uses the native V2 shape; convert any V1-shaped user settings it merges with rather than mixing formats inside one agent, provider, or MCP entry. Preserve existing providers, models, plugins, permissions, and unrelated files.
 5. Start OpenCode once to migrate terminal preferences into `~/.config/opencode/cli.json`, then merge `opencode/cli.json` into it.
 6. Merge `helix/config.toml` into the user's Helix config (normally `~/.config/helix/config.toml`).
-7. Connect OpenAI with **Sign in with ChatGPT**, and the Claude subscription with **Claude Agent** (install Claude Code, run `claude auth login`), both through `/connect`. Connect OpenRouter there too, with an API key, for the `neon` agent. The agent models are listed [below](#models). If a provider is unavailable, ask which available model to substitute before changing the agent files.
+7. Connect OpenAI with **Sign in with ChatGPT**, and the Claude subscription with **Claude Agent** (install Claude Code, run `claude auth login`), both through `/connect`. Connect Google there too, with an AI Studio API key, for the `neon` agent. The agent models are listed [below](#models). If a provider is unavailable, ask which available model to substitute before changing the agent files.
 8. Store API keys in mode-600 files in the OpenCode config directory: `alphaxiv-api-key` (alphaXiv Settings > API Keys), `context7-api-key`, and `firecrawl-api-key`, each without a trailing newline. `opencode.json` reads them with `{file:...}`. Ask whether the user has a Zipline instance for [artifacts](#artifacts).
 9. Set `EDITOR` and `VISUAL` to `hx` in the user's appropriate shell configuration.
 10. Keep Linear, GitHub, and Notion disabled unless the user wants the work integrations. If enabled, set `disabled` to `false` and authenticate them with `/mcps`. Keep SF Compute's `givemeanode` disabled by default.
@@ -33,7 +33,7 @@ The agent should:
 | superagent | `claude-agent/opus` | |
 | researcher | `openai/gpt-6.2-astra` | |
 | astra | `openai/gpt-6.2-astra` | |
-| neon | `openrouter/google/gemini-4-neon` | |
+| neon | `google/gemini-4-neon` | |
 | watcher | `openai/gpt-6.1-terra` | |
 | fable | `claude-agent/fable` | |
 
